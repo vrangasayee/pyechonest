@@ -141,7 +141,7 @@ def callm(method, param_dict, POST=False, socket_timeout=None, data=None):
     ** note, if we require 2.6, we can get rid of this timeout munging.
     """
     try:
-        param_dict['api_key'] = '1PWTMLZOMNMVH6YFB'
+        param_dict['api_key'] = config.ECHO_NEST_API_KEY
         param_list = []
         if not socket_timeout:
             socket_timeout = config.CALL_TIMEOUT

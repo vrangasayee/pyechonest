@@ -132,8 +132,10 @@ class Track(TrackProxy):
                         json_string = urllib.request.urlopen(self.analysis_url).read()
                     else:
                         raise Exception("Failed to create track analysis.")
+                
+                response = json_string.decode('windows-1252')
 
-                analysis = json.loads(json_string)
+                analysis = json.loads(response)
                 analysis_track = analysis.pop('track', {})
                 self.__dict__.update(analysis)
                 self.__dict__.update(analysis_track)
