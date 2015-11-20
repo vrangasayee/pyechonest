@@ -14,8 +14,8 @@ except ImportError:
     import simplejson as json
 import datetime
 
-import util
-from proxies import ResultList
+from . import util
+from .proxies import ResultList
 
 def list(sandbox_name, results=15, start=0):
     """

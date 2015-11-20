@@ -9,8 +9,8 @@ The Song module loosely covers http://developer.echonest.com/docs/v4/song.html
 Refer to the official api documentation if you are unsure about something.
 """
 import os
-import util
-from proxies import SongProxy
+from . import util
+from .proxies import SongProxy
 
 try:
     import json
@@ -163,7 +163,7 @@ class Song(SongProxy):
         """ 
         if not (cache and ('song_type' in self.cache)):
             response = self.get_attribute('profile', bucket='song_type')
-            if response['songs'][0].has_key('song_type'):
+            if 'song_type' in response['songs'][0]:
                 self.cache['song_type'] = response['songs'][0]['song_type']
             else:
                 self.cache['song_type'] = []
@@ -264,14 +264,14 @@ class Song(SongProxy):
         >>> 
         """
         idspace = util.map_idspace(idspace)
-        if not (cache and ('foreign_ids' in self.cache) and filter(lambda d: d.get('catalog') == idspace, self.cache['foreign_ids'])):
+        if not (cache and ('foreign_ids' in self.cache) and [d for d in self.cache['foreign_ids'] if d.get('catalog') == idspace]):
             response = self.get_attribute('profile', bucket=['id:'+idspace])
             rsongs = response['songs']
             if len(rsongs) == 0:
                 return None
             foreign_ids = rsongs[0].get("foreign_ids", [])
             self.cache['foreign_ids'] = self.cache.get('foreign_ids', []) + foreign_ids
-        cval = filter(lambda d: d.get('catalog') == idspace, self.cache.get('foreign_ids'))
+        cval = [d for d in self.cache.get('foreign_ids') if d.get('catalog') == idspace]
         return cval[0].get('foreign_id') if cval else None
 
     def get_song_discovery(self, cache=True):
@@ -351,9 +351,9 @@ class Song(SongProxy):
             # don't blow away the cache for other catalogs
             potential_tracks = response['songs'][0].get('tracks', [])
             existing_track_ids = [tr['foreign_id'] for tr in self.cache['tracks']]
-            new_tds = filter(lambda tr: tr['foreign_id'] not in existing_track_ids, potential_tracks)
+            new_tds = [tr for tr in potential_tracks if tr['foreign_id'] not in existing_track_ids]
             self.cache['tracks'].extend(new_tds)
-        return filter(lambda tr: tr['catalog']==util.map_idspace(catalog), self.cache['tracks'])
+        return [tr for tr in self.cache['tracks'] if tr['catalog']==util.map_idspace(catalog)]
 
 
 def search(title=None, artist=None, artist_id=None, combined=None, description=None, style=None, mood=None,

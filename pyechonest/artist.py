@@ -8,9 +8,9 @@ Created by Tyler Williams on 2010-04-25.
 The Artist module loosely covers http://developer.echonest.com/docs/v4/artist.html
 Refer to the official api documentation if you are unsure about something.
 """
-import util
-from proxies import ArtistProxy, ResultList
-from song import Song
+from . import util
+from .proxies import ArtistProxy, ResultList
+from .song import Song
 
 
 class Artist(ArtistProxy):
@@ -248,12 +248,11 @@ class Artist(ArtistProxy):
         u'7digital:artist:186042'
         >>> 
         """
-        if not (cache and ('foreign_ids' in self.cache) and filter(lambda d: d.get('catalog') == idspace, self.cache['foreign_ids'])):
+        if not (cache and ('foreign_ids' in self.cache) and [d for d in self.cache['foreign_ids'] if d.get('catalog') == idspace]):
             response = self.get_attribute('profile', bucket=['id:'+idspace])
             foreign_ids = response['artist'].get("foreign_ids", [])
             self.cache['foreign_ids'] = self.cache.get('foreign_ids', []) + foreign_ids
-        cval = filter(lambda d: d.get('catalog') == util.map_idspace(idspace),
-                      self.cache.get('foreign_ids'))
+        cval = [d for d in self.cache.get('foreign_ids') if d.get('catalog') == util.map_idspace(idspace)]
         return cval[0].get('foreign_id') if cval else None
     
     def get_twitter_id(self, cache=True):

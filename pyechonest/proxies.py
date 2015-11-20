@@ -5,7 +5,7 @@
 Copyright (c) 2010 The Echo Nest. All rights reserved.
 Created by Tyler Williams on 2010-04-25.
 """
-import util
+from . import util
 
 class ResultList(list):
     def __init__(self, li, start=0, total=0):
@@ -35,7 +35,7 @@ class ArtistProxy(GenericProxy):
         buckets = buckets or []
         self.id = identifier
         self._object_type = 'artist'
-        kwargs = dict((str(k), v) for (k,v) in kwargs.iteritems())
+        kwargs = dict((str(k), v) for (k,v) in kwargs.items())
         # the following are integral to all artist objects... the rest is up to you!
         core_attrs = ['name']
         
@@ -59,7 +59,7 @@ class CatalogProxy(GenericProxy):
         buckets = buckets or []
         self.id = identifier
         self._object_type = 'catalog'
-        kwargs = dict((str(k), v) for (k,v) in kwargs.iteritems())
+        kwargs = dict((str(k), v) for (k,v) in kwargs.items())
         # the following are integral to all catalog objects... the rest is up to you!
         core_attrs = ['name']
         if not all(ca in kwargs for ca in core_attrs):
@@ -113,10 +113,10 @@ class PlaylistProxy(GenericProxy):
             kwargs['bucket'] = buckets
             kwargs['genre'] = kwargs['genres']
             del kwargs['genres']
-            kwargs = dict((str(k), v) for (k,v) in kwargs.iteritems())
+            kwargs = dict((str(k), v) for (k,v) in kwargs.items())
             
             if not all(ca in kwargs for ca in core_attrs):
-                kwargs = dict((str(k), v) for (k,v) in kwargs.iteritems())
+                kwargs = dict((str(k), v) for (k,v) in kwargs.items())
                 profile = self.get_attribute('create', **kwargs)
                 kwargs.update(profile)
             [self.__dict__.update({ca:kwargs.pop(ca)}) for ca in core_attrs if ca in kwargs]
@@ -131,18 +131,18 @@ class SongProxy(GenericProxy):
         buckets = buckets or []
         self.id = identifier
         self._object_type = 'song'
-        kwargs = dict((str(k), v) for (k,v) in kwargs.iteritems())
+        kwargs = dict((str(k), v) for (k,v) in kwargs.items())
         
         # BAW -- this is debug output from identify that returns a track_id. i am not sure where else to access this..
-        if kwargs.has_key("track_id"):
+        if "track_id" in kwargs:
             self.track_id = kwargs["track_id"]
-        if kwargs.has_key("tag"):
+        if "tag" in kwargs:
             self.tag = kwargs["tag"]
-        if kwargs.has_key("score"):
+        if "score" in kwargs:
             self.score = kwargs["score"]
-        if kwargs.has_key('audio'):
+        if 'audio' in kwargs:
             self.audio = kwargs['audio']
-        if kwargs.has_key('release_image'):
+        if 'release_image' in kwargs:
             self.release_image = kwargs['release_image']
         
         # the following are integral to all song objects... the rest is up to you!

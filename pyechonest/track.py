@@ -1,12 +1,12 @@
-import urllib2
+import urllib.request, urllib.error, urllib.parse 
 try:
     import json
 except ImportError:
     import simplejson as json
 
 import hashlib
-from proxies import TrackProxy
-import util
+from pyechonest.proxies import TrackProxy
+from . import util
 import time
 
 # Seconds to wait for asynchronous track/upload or track/analyze jobs to complete.
@@ -122,14 +122,14 @@ class Track(TrackProxy):
                 # Try the existing analysis_url first. This expires shortly
                 # after creation.
                 try:
-                    json_string = urllib2.urlopen(self.analysis_url).read()
-                except urllib2.HTTPError:
+                    json_string = urllib.request.urlopen(self.analysis_url).read()
+                except urllib.error.HTTPError:
                     # Probably the analysis_url link has expired. Refresh it.
                     param_dict = dict(id = self.id)
                     new_track = _profile(param_dict, DEFAULT_ASYNC_TIMEOUT)
                     if new_track and new_track.analysis_url:
                         self.analysis_url = new_track.analysis_url
-                        json_string = urllib2.urlopen(self.analysis_url).read()
+                        json_string = urllib.request.urlopen(self.analysis_url).read()
                     else:
                         raise Exception("Failed to create track analysis.")
 

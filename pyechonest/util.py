@@ -7,10 +7,10 @@ Created by Tyler Williams on 2010-04-25.
 
 Utility functions to support the Echo Nest web API interface.
 """
-import urllib
-import urllib2
-import httplib
-import config
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
+import http.client
+from . import config
 import logging
 import socket
 import re
@@ -18,7 +18,8 @@ import time
 import os
 import subprocess
 import traceback
-from types import StringType, UnicodeType
+#from types import StringType, UnicodeType
+import codecs
 
 try:
     import json
@@ -43,14 +44,14 @@ short_regex = re.compile(r'^((%s)[0-9A-Z]{16})\^?([0-9\.]+)?' % r'|'.join(n[0] f
 long_regex = re.compile(r'music://id.echonest.com/.+?/(%s)/(%s)[0-9A-Z]{16}\^?([0-9\.]+)?' % (r'|'.join(n[0] for n in TYPENAMES), r'|'.join(n[0] for n in TYPENAMES)))
 headers = [('User-Agent', 'Pyechonest %s' % (config.__version__,))]
 
-class MyBaseHandler(urllib2.BaseHandler):
+class MyBaseHandler(urllib.request.BaseHandler):
     def default_open(self, request):
         if config.TRACE_API_CALLS:
             logger.info("%s" % (request.get_full_url(),))
         request.start_time = time.time()
         return None
         
-class MyErrorProcessor(urllib2.HTTPErrorProcessor):
+class MyErrorProcessor(urllib.request.HTTPErrorProcessor):
     def http_response(self, request, response):
         code = response.code
         if config.TRACE_API_CALLS:
@@ -60,7 +61,7 @@ class MyErrorProcessor(urllib2.HTTPErrorProcessor):
         else:
             urllib2.HTTPErrorProcessor.http_response(self, request, response)
 
-opener = urllib2.build_opener(MyBaseHandler(), MyErrorProcessor())
+opener = urllib.request.build_opener(MyBaseHandler(), MyErrorProcessor())
 opener.addheaders = headers
 
 class EchoNestException(Exception):
@@ -111,9 +112,13 @@ def get_successful_response(raw_json):
         http_status = raw_json.getcode()
     else:
         http_status = None
-    raw_json = raw_json.read()
+    response = raw_json.read().decode('windows-1252')
+    
+    
+    
+
     try:
-        response_dict = json.loads(raw_json)
+        response_dict = json.loads(response)
         status_dict = response_dict['response']['status']
         code = int(status_dict['code'])
         message = status_dict['message']
@@ -136,20 +141,20 @@ def callm(method, param_dict, POST=False, socket_timeout=None, data=None):
     ** note, if we require 2.6, we can get rid of this timeout munging.
     """
     try:
-        param_dict['api_key'] = config.ECHO_NEST_API_KEY
+        param_dict['api_key'] = '1PWTMLZOMNMVH6YFB'
         param_list = []
         if not socket_timeout:
             socket_timeout = config.CALL_TIMEOUT
 
-        for key,val in param_dict.iteritems():
+        for key,val in param_dict.items():
             if isinstance(val, list):
                 param_list.extend( [(key,subval) for subval in val] )
             elif val is not None:
-                if isinstance(val, unicode):
+                if isinstance(val, str):
                     val = val.encode('utf-8')
                 param_list.append( (key,val) )
 
-        params = urllib.urlencode(param_list)
+        params = urllib.parse.urlencode(param_list)
 
         orig_timeout = socket.getdefaulttimeout()
         socket.setdefaulttimeout(socket_timeout)
@@ -164,9 +169,10 @@ def callm(method, param_dict, POST=False, socket_timeout=None, data=None):
 
                 if data is None:
                     data = ''
-                data = urllib.urlencode(data)
+                
+                data = urllib.parse.urlencode(data)
                 data = "&".join([data, params])
-
+                data = str(data).encode('windows-1252')
                 f = opener.open(url, data=data)
             else:
                 """
@@ -184,7 +190,8 @@ def callm(method, param_dict, POST=False, socket_timeout=None, data=None):
 
                 if config.TRACE_API_CALLS:
                     logger.info("%s/%s" % (host+':'+str(port), url,))
-                conn = httplib.HTTPConnection(host, port = port)
+                conn = http.client.HTTPConnection(host, port = port)
+                print(url)
                 conn.request('POST', url, body = data, headers = dict([('Content-Type', 'application/octet-stream')]+headers))
                 f = conn.getresponse()
 
@@ -203,7 +210,7 @@ def callm(method, param_dict, POST=False, socket_timeout=None, data=None):
         response_dict = get_successful_response(f)
         return response_dict
 
-    except IOError, e:
+    except IOError as e:
         if hasattr(e, 'reason'):
             raise EchoNestIOError(error=e.reason)
         elif hasattr(e, 'code'):
@@ -243,15 +250,15 @@ def oauthgetm(method, param_dict, socket_timeout=None):
     if not socket_timeout:
         socket_timeout = config.CALL_TIMEOUT
     
-    for key,val in param_dict.iteritems():
+    for key,val in param_dict.items():
         if isinstance(val, list):
             param_list.extend( [(key,subval) for subval in val] )
         elif val is not None:
-            if isinstance(val, unicode):
+            if isinstance(val, str):
                 val = val.encode('utf-8')
             param_list.append( (key,val) )
 
-    params = urllib.urlencode(param_list)
+    params = urllib.parse.urlencode(param_list)
     
     orig_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(socket_timeout)
@@ -284,9 +291,9 @@ def postChunked(host, selector, fields, files):
     memory) and the ability to work from behind a proxy (due to its 
     basis on urllib2).
     """
-    params = urllib.urlencode(fields)
+    params = urllib.parse.urlencode(fields)
     url = 'http://%s%s?%s' % (host, selector, params)
-    u = urllib2.urlopen(url, files)
+    u = urllib.request.urlopen(url, files)
     result = u.read()
     [fp.close() for (key, fp) in files]
     return result
@@ -295,7 +302,7 @@ def postChunked(host, selector, fields, files):
 def fix(x):
     # we need this to fix up all the dict keys to be strings, not unicode objects
     assert(isinstance(x,dict))
-    return dict((str(k), v) for (k,v) in x.iteritems())
+    return dict((str(k), v) for (k,v) in x.items())
 
 
 def map_idspace(input_idspace):

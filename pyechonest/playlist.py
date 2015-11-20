@@ -9,10 +9,10 @@ The Playlist module loosely covers http://developer.echonest.com/docs/v4/playlis
 Refer to the official api documentation if you are unsure about something.
 """
 
-import util
-from proxies import PlaylistProxy
-from song import Song
-import catalog
+from . import util
+from .proxies import PlaylistProxy
+from .song import Song
+from . import catalog
 import logging
 logger = logging.getLogger(__name__)
 
